@@ -1,0 +1,847 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MANTAP — Manajemen Terpadu Aset dan Prasarana</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --green: #0F6E56;
+    --green-dark: #085041;
+    --green-light: #EAF3DE;
+    --green-text: #27500A;
+    --amber-bg: #FAEEDA;
+    --amber-text: #633806;
+    --red-bg: #FCEBEB;
+    --red-text: #501313;
+    --border: #e2e2e2;
+    --bg: #f7f7f5;
+    --surface: #ffffff;
+    --text: #1a1a1a;
+    --text-muted: #6b6b6b;
+    --radius: 10px;
+    --radius-sm: 6px;
+  }
+  body {
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    font-size: 15px;
+  }
+  /* TOP BAR */
+  .topbar {
+    background: var(--green);
+    color: white;
+    padding: 0 1.5rem;
+    display: flex;
+    align-items: center;
+    height: 56px;
+    gap: 12px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+  }
+  .topbar-logo {
+    width: 32px; height: 32px;
+    background: rgba(255,255,255,0.2);
+    border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+  }
+  .topbar-logo svg { width: 18px; height: 18px; fill: white; }
+  .topbar-title { font-size: 17px; font-weight: 600; letter-spacing: -0.01em; }
+  .topbar-sub { font-size: 12px; opacity: 0.75; margin-left: auto; }
+  /* LAYOUT */
+  .layout { display: flex; max-width: 1100px; margin: 0 auto; gap: 0; }
+  .sidebar {
+    width: 220px; min-width: 220px;
+    background: var(--surface);
+    border-right: 1px solid var(--border);
+    min-height: calc(100vh - 56px);
+    padding: 1.25rem 0;
+    position: sticky;
+    top: 56px;
+    height: calc(100vh - 56px);
+    overflow-y: auto;
+  }
+  .sidebar-label {
+    font-size: 10px;
+    font-weight: 600;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    padding: 0 1rem 0.5rem;
+    margin-top: 0.5rem;
+  }
+  .nav-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 9px 1rem;
+    font-size: 13.5px;
+    color: var(--text-muted);
+    cursor: pointer;
+    border-left: 3px solid transparent;
+    transition: all 0.15s;
+    text-decoration: none;
+  }
+  .nav-item:hover { background: var(--bg); color: var(--text); }
+  .nav-item.active {
+    color: var(--green);
+    background: var(--green-light);
+    border-left-color: var(--green);
+    font-weight: 500;
+  }
+  .nav-icon { width: 16px; height: 16px; opacity: 0.6; flex-shrink: 0; }
+  .nav-item.active .nav-icon { opacity: 1; }
+  /* MAIN */
+  .main { flex: 1; padding: 1.75rem; min-width: 0; }
+  .page { display: none; }
+  .page.active { display: block; }
+  /* PAGE HEADER */
+  .page-header { margin-bottom: 1.5rem; }
+  .page-title { font-size: 20px; font-weight: 600; color: var(--text); }
+  .page-desc { font-size: 13px; color: var(--text-muted); margin-top: 3px; }
+  /* CARDS */
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 1.25rem;
+    margin-bottom: 1rem;
+  }
+  .card-title {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--green);
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+    margin-bottom: 1rem;
+  }
+  /* STATS */
+  .stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 1.25rem; }
+  .stat-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 1rem;
+  }
+  .stat-label { font-size: 11px; color: var(--text-muted); margin-bottom: 6px; }
+  .stat-val { font-size: 28px; font-weight: 600; line-height: 1; }
+  .stat-val.green { color: var(--green); }
+  .stat-val.amber { color: #BA7517; }
+  .stat-val.red { color: #A32D2D; }
+  /* FORM */
+  .form-grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .form-grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; }
+  .field { margin-bottom: 0.875rem; }
+  .field:last-child { margin-bottom: 0; }
+  .field label {
+    display: block;
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--text-muted);
+    margin-bottom: 5px;
+  }
+  .field input, .field select, .field textarea {
+    width: 100%;
+    padding: 8px 10px;
+    font-size: 14px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    background: var(--bg);
+    color: var(--text);
+    font-family: inherit;
+    transition: border-color 0.15s;
+  }
+  .field input:focus, .field select:focus, .field textarea:focus {
+    outline: none;
+    border-color: var(--green);
+    background: white;
+  }
+  .field textarea { min-height: 80px; resize: vertical; }
+  /* BUTTONS */
+  .btn-primary {
+    width: 100%;
+    padding: 11px;
+    background: var(--green);
+    color: white;
+    border: none;
+    border-radius: var(--radius-sm);
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    font-family: inherit;
+    transition: background 0.15s;
+    margin-top: 0.75rem;
+  }
+  .btn-primary:hover { background: var(--green-dark); }
+  .btn-secondary {
+    padding: 8px 14px;
+    background: transparent;
+    color: var(--green);
+    border: 1px solid var(--green);
+    border-radius: var(--radius-sm);
+    font-size: 13px;
+    cursor: pointer;
+    font-family: inherit;
+    transition: all 0.15s;
+  }
+  .btn-secondary:hover { background: var(--green-light); }
+  .btn-row { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 0.75rem; }
+  /* TABLE */
+  .table-wrap { overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  th {
+    padding: 9px 10px;
+    text-align: left;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    border-bottom: 1px solid var(--border);
+    background: var(--bg);
+  }
+  td { padding: 9px 10px; border-bottom: 1px solid var(--border); }
+  tr:last-child td { border-bottom: none; }
+  /* BADGE */
+  .badge {
+    display: inline-block;
+    padding: 3px 8px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 500;
+  }
+  .badge-ok { background: var(--green-light); color: var(--green-text); }
+  .badge-warn { background: var(--amber-bg); color: var(--amber-text); }
+  .badge-danger { background: var(--red-bg); color: var(--red-text); }
+  /* AI OUTPUT */
+  .ai-box {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 1rem;
+    font-size: 13px;
+    line-height: 1.7;
+    color: var(--text);
+    min-height: 64px;
+    white-space: pre-wrap;
+    margin-top: 0.75rem;
+  }
+  .ai-box.placeholder { color: var(--text-muted); font-style: italic; }
+  .ai-loading { color: var(--green); font-style: italic; }
+  /* PANDUAN STEPS */
+  .step {
+    display: flex;
+    gap: 14px;
+    padding: 1rem 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .step:last-child { border-bottom: none; }
+  .step-num {
+    width: 30px; height: 30px; min-width: 30px;
+    border-radius: 50%;
+    background: var(--green);
+    color: white;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 13px; font-weight: 600;
+  }
+  .step-title { font-size: 14px; font-weight: 500; margin-bottom: 5px; }
+  .step-desc { font-size: 13px; color: var(--text-muted); line-height: 1.6; }
+  .step-desc code {
+    background: var(--border);
+    padding: 1px 5px;
+    border-radius: 3px;
+    font-size: 12px;
+    color: var(--text);
+  }
+  .step-desc a { color: var(--green); }
+  /* INVENTARIS TABLE INLINE INPUTS */
+  .inv-input {
+    border: none;
+    background: transparent;
+    font-size: 13px;
+    color: var(--text);
+    font-family: inherit;
+    width: 100%;
+    padding: 2px 0;
+  }
+  .inv-input:focus { outline: 1px solid var(--green); border-radius: 3px; background: white; padding: 2px 4px; }
+  .inv-select {
+    border: none;
+    background: transparent;
+    font-size: 13px;
+    color: var(--text);
+    font-family: inherit;
+  }
+  /* ALERT */
+  .alert {
+    padding: 10px 14px;
+    border-radius: var(--radius-sm);
+    font-size: 13px;
+    margin-bottom: 1rem;
+  }
+  .alert-info { background: #E6F1FB; color: #0C447C; border-left: 3px solid #185FA5; }
+  .alert-success { background: var(--green-light); color: var(--green-text); border-left: 3px solid var(--green); }
+  /* COPY BOX */
+  .copy-box {
+    background: #1e1e2e;
+    color: #cdd6f4;
+    border-radius: var(--radius-sm);
+    padding: 1rem;
+    font-size: 12px;
+    font-family: 'Courier New', monospace;
+    line-height: 1.6;
+    white-space: pre-wrap;
+    position: relative;
+    margin-top: 0.75rem;
+  }
+  .copy-btn {
+    position: absolute;
+    top: 8px; right: 8px;
+    background: rgba(255,255,255,0.1);
+    color: #cdd6f4;
+    border: 1px solid rgba(255,255,255,0.2);
+    padding: 4px 10px;
+    border-radius: 4px;
+    font-size: 11px;
+    cursor: pointer;
+    font-family: inherit;
+  }
+  .copy-btn:hover { background: rgba(255,255,255,0.2); }
+  /* RESPONSIVE */
+  @media (max-width: 700px) {
+    .sidebar { display: none; }
+    .main { padding: 1rem; }
+    .stats-grid { grid-template-columns: 1fr 1fr; }
+    .form-grid-2 { grid-template-columns: 1fr; }
+    .form-grid-3 { grid-template-columns: 1fr; }
+    .topbar-sub { display: none; }
+    .mobile-nav {
+      display: flex !important;
+      overflow-x: auto;
+      gap: 6px;
+      padding: 0.75rem 1rem;
+      background: white;
+      border-bottom: 1px solid var(--border);
+    }
+    .mobile-nav button {
+      flex-shrink: 0;
+      padding: 6px 12px;
+      font-size: 12px;
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      background: transparent;
+      color: var(--text-muted);
+      cursor: pointer;
+      font-family: inherit;
+    }
+    .mobile-nav button.active {
+      background: var(--green);
+      color: white;
+      border-color: var(--green);
+    }
+  }
+  .mobile-nav { display: none; }
+  /* FOOTER */
+  .footer {
+    text-align: center;
+    padding: 1.5rem;
+    font-size: 12px;
+    color: var(--text-muted);
+    border-top: 1px solid var(--border);
+    background: white;
+    margin-top: 2rem;
+  }
+  /* PRINT */
+  @media print {
+    .sidebar, .topbar, .btn-primary, .btn-secondary, .btn-row { display: none !important; }
+    .main { padding: 0; }
+  }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="topbar-logo">
+    <svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22" fill="none" stroke="white" stroke-width="1.5" fill-opacity="0"/></svg>
+  </div>
+  <span class="topbar-title">MANTAP</span>
+  <span style="font-size:13px; opacity:0.7; margin-left: 6px; display:none" id="topbar-page"></span>
+  <span class="topbar-sub">Kanwil Ditjenpas Aceh · Program Magang Nasional 2026</span>
+</div>
+
+<!-- Mobile nav -->
+<div class="mobile-nav" id="mobile-nav">
+  <button class="active" onclick="showPage('dashboard', this)">Dashboard</button>
+  <button onclick="showPage('cek-harian', this)">Cek Harian</button>
+  <button onclick="showPage('lapor-gangguan', this)">Laporan</button>
+  <button onclick="showPage('inventaris', this)">Inventaris</button>
+  <button onclick="showPage('berita-acara', this)">Berita Acara</button>
+  <button onclick="showPage('panduan', this)">Panduan</button>
+</div>
+
+<div class="layout">
+  <!-- SIDEBAR -->
+  <nav class="sidebar">
+    <div class="sidebar-label">Menu Utama</div>
+    <a class="nav-item active" onclick="showPage('dashboard', this)" href="#">
+      <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+      Dashboard
+    </a>
+    <a class="nav-item" onclick="showPage('cek-harian', this)" href="#">
+      <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+      Form Cek Harian
+    </a>
+    <a class="nav-item" onclick="showPage('lapor-gangguan', this)" href="#">
+      <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+      Lapor Gangguan
+    </a>
+    <a class="nav-item" onclick="showPage('inventaris', this)" href="#">
+      <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+      Inventaris Aset
+    </a>
+    <a class="nav-item" onclick="showPage('berita-acara', this)" href="#">
+      <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+      Berita Acara
+    </a>
+    <div class="sidebar-label" style="margin-top:1rem;">Pengaturan</div>
+    <a class="nav-item" onclick="showPage('panduan', this)" href="#">
+      <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+      Panduan & Setup
+    </a>
+  </nav>
+
+  <!-- MAIN CONTENT -->
+  <main class="main">
+
+    <!-- ===== DASHBOARD ===== -->
+    <div class="page active" id="page-dashboard">
+      <div class="page-header">
+        <div class="page-title">Dashboard MANTAP</div>
+        <div class="page-desc">Ringkasan kondisi fasilitas — Kanwil Ditjenpas Aceh</div>
+      </div>
+      <div class="alert alert-info">
+        ℹ️ Sistem MANTAP aktif sejak November 2025. Semua form terhubung ke Google Spreadsheet secara real-time.
+      </div>
+      <div class="stats-grid">
+        <div class="stat-card"><div class="stat-label">Cek harian bulan ini</div><div class="stat-val green" id="s1">28</div></div>
+        <div class="stat-card"><div class="stat-label">Laporan aktif</div><div class="stat-val amber" id="s2">3</div></div>
+        <div class="stat-card"><div class="stat-label">Total aset tercatat</div><div class="stat-val" id="s3">47</div></div>
+        <div class="stat-card"><div class="stat-label">Perbaikan selesai</div><div class="stat-val green" id="s4">12</div></div>
+      </div>
+      <div class="card">
+        <div class="card-title">Status fasilitas terkini</div>
+        <div class="table-wrap">
+          <table>
+            <tr><th>Fasilitas</th><th>Kondisi</th><th>Terakhir dicek</th><th>Status</th><th>Pengelola</th></tr>
+            <tr><td>AC Ruang Kerja Lt.2</td><td><span class="badge badge-warn">Rusak Ringan</span></td><td>28 Apr 2026</td><td>Proses</td><td>Muammar</td></tr>
+            <tr><td>Toilet Umum Lantai 1</td><td><span class="badge badge-ok">Baik</span></td><td>28 Apr 2026</td><td>Selesai</td><td>Muammar</td></tr>
+            <tr><td>Genset Cadangan</td><td><span class="badge badge-danger">Rusak Berat</span></td><td>27 Apr 2026</td><td>Belum Ditangani</td><td>—</td></tr>
+            <tr><td>CCTV Lobi Depan</td><td><span class="badge badge-ok">Baik</span></td><td>28 Apr 2026</td><td>Selesai</td><td>Muammar</td></tr>
+            <tr><td>Proyektor Aula</td><td><span class="badge badge-warn">Rusak Ringan</span></td><td>26 Apr 2026</td><td>Proses</td><td>Muammar</td></tr>
+            <tr><td>Printer Loket Layanan</td><td><span class="badge badge-ok">Baik</span></td><td>28 Apr 2026</td><td>Selesai</td><td>Muammar</td></tr>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== CEK HARIAN ===== -->
+    <div class="page" id="page-cek-harian">
+      <div class="page-header">
+        <div class="page-title">Form Cek Harian Fasilitas</div>
+        <div class="page-desc">Lampiran 1 MANTAP — diisi setiap pagi oleh Pengelola Fasilitas</div>
+      </div>
+      <div class="alert alert-info">
+        📋 Isi form ini setiap hari. Data akan tersimpan dan dapat diekspor ke Google Spreadsheet.
+      </div>
+      <div class="card">
+        <div class="card-title">Informasi pengecekan</div>
+        <div class="form-grid-2">
+          <div class="field"><label>Tanggal pengecekan</label><input type="date" id="ch-tanggal"></div>
+          <div class="field"><label>Nama pengelola fasilitas</label><input type="text" id="ch-nama" placeholder="Nama lengkap"></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title">Daftar fasilitas yang dicek</div>
+        <div id="fasilitas-container">
+          <!-- rows injected by JS -->
+        </div>
+        <div class="btn-row">
+          <button class="btn-secondary" onclick="addFasilitasRow()">+ Tambah fasilitas</button>
+          <button class="btn-secondary" onclick="hapusFasilitasRow()">− Hapus baris terakhir</button>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title">Analisis & rekomendasi AI</div>
+        <button class="btn-secondary" onclick="runAI('cek-harian')">Analisis kondisi & beri rekomendasi →</button>
+        <div class="ai-box placeholder" id="ai-cek-harian">Klik tombol di atas setelah mengisi form untuk mendapat rekomendasi tindak lanjut otomatis.</div>
+      </div>
+      <div class="card">
+        <div class="card-title">Link Google Form resmi</div>
+        <p style="font-size:13px; color:var(--text-muted); margin-bottom:0.75rem;">Bagikan link ini ke seluruh staf agar dapat melaporkan kondisi fasilitas:</p>
+        <div class="alert alert-success">🔗 Setelah setup (lihat <b>Panduan & Setup</b>), salin link Google Form di sini dan bagikan via WhatsApp atau email.</div>
+      </div>
+    </div>
+
+    <!-- ===== LAPOR GANGGUAN ===== -->
+    <div class="page" id="page-lapor-gangguan">
+      <div class="page-header">
+        <div class="page-title">Kartu Lapor Gangguan Fasilitas</div>
+        <div class="page-desc">Lampiran 2 MANTAP — dapat diisi oleh semua pegawai</div>
+      </div>
+      <div class="card">
+        <div class="card-title">Data pelapor</div>
+        <div class="form-grid-2">
+          <div class="field"><label>Tanggal laporan</label><input type="date" id="lg-tanggal"></div>
+          <div class="field"><label>Nama pelapor</label><input type="text" id="lg-pelapor" placeholder="Nama lengkap"></div>
+        </div>
+        <div class="form-grid-2">
+          <div class="field"><label>Unit / Ruangan</label><input type="text" id="lg-unit" placeholder="Contoh: Ruang Arsip Lt.3"></div>
+          <div class="field"><label>Fasilitas bermasalah</label><input type="text" id="lg-fasilitas" placeholder="Nama fasilitas yang rusak"></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title">Detail gangguan</div>
+        <div class="field"><label>Deskripsi masalah</label><textarea id="lg-deskripsi" placeholder="Jelaskan kerusakan atau gangguan secara detail..."></textarea></div>
+        <div class="form-grid-2">
+          <div class="field"><label>Tingkat urgensi</label>
+            <select id="lg-urgensi">
+              <option value="Rendah">Rendah — tidak mengganggu operasional</option>
+              <option value="Sedang">Sedang — sedikit mengganggu</option>
+              <option value="Tinggi">Tinggi — perlu segera ditangani</option>
+            </select>
+          </div>
+          <div class="field"><label>Estimasi tanggal selesai</label><input type="date" id="lg-selesai"></div>
+        </div>
+        <div class="field"><label>Tindak lanjut (diisi pengelola)</label><input type="text" id="lg-tindak" placeholder="Langkah yang akan diambil..."></div>
+      </div>
+      <div class="card">
+        <div class="card-title">Rekomendasi penanganan AI</div>
+        <button class="btn-secondary" onclick="runAI('lapor-gangguan')">Dapatkan rekomendasi penanganan →</button>
+        <div class="ai-box placeholder" id="ai-lapor-gangguan">Isi detail gangguan lalu klik tombol di atas.</div>
+      </div>
+    </div>
+
+    <!-- ===== INVENTARIS ===== -->
+    <div class="page" id="page-inventaris">
+      <div class="page-header">
+        <div class="page-title">Buku Inventaris Terstruktur</div>
+        <div class="page-desc">Lampiran 3 MANTAP — pencatatan aset fasilitas umum</div>
+      </div>
+      <div class="card">
+        <div class="card-title">Periode pencatatan</div>
+        <div class="form-grid-2">
+          <div class="field"><label>Dari</label><input type="month" id="inv-dari" value="2026-04"></div>
+          <div class="field"><label>Sampai</label><input type="month" id="inv-sampai" value="2026-04"></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title">Daftar inventaris</div>
+        <div class="table-wrap">
+          <table id="inv-table">
+            <tr>
+              <th style="width:36px">No</th>
+              <th>Nama barang</th>
+              <th style="width:90px">Kode</th>
+              <th style="width:50px">Jml</th>
+              <th style="width:70px">Satuan</th>
+              <th style="width:110px">Kondisi</th>
+              <th>Lokasi</th>
+              <th style="width:130px">Keterangan</th>
+            </tr>
+          </table>
+        </div>
+        <div class="btn-row">
+          <button class="btn-secondary" onclick="addInvRow()">+ Tambah baris</button>
+          <button class="btn-secondary" onclick="hapusInvRow()">− Hapus baris</button>
+          <button class="btn-secondary" onclick="exportInv()">Export CSV →</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== BERITA ACARA ===== -->
+    <div class="page" id="page-berita-acara">
+      <div class="page-header">
+        <div class="page-title">Berita Acara Perbaikan Fasilitas</div>
+        <div class="page-desc">Lampiran 4 MANTAP — dokumentasi pengawasan pihak ketiga</div>
+      </div>
+      <div class="card">
+        <div class="card-title">Identitas dokumen</div>
+        <div class="form-grid-2">
+          <div class="field"><label>Nomor berita acara</label><input type="text" id="ba-nomor" placeholder="BA-001/V/2026"></div>
+          <div class="field"><label>Tanggal perbaikan</label><input type="date" id="ba-tanggal"></div>
+        </div>
+        <div class="field"><label>Nama pihak ketiga / vendor</label><input type="text" id="ba-vendor" placeholder="Nama perusahaan atau perorangan"></div>
+      </div>
+      <div class="card">
+        <div class="card-title">Detail perbaikan</div>
+        <div class="form-grid-2">
+          <div class="field"><label>Fasilitas yang diperbaiki</label><input type="text" id="ba-fasilitas" placeholder="Nama fasilitas"></div>
+          <div class="field"><label>Lokasi fasilitas</label><input type="text" id="ba-lokasi" placeholder="Ruangan / gedung / lantai"></div>
+        </div>
+        <div class="field"><label>Deskripsi kerusakan awal</label><textarea id="ba-kerusakan" placeholder="Kondisi fasilitas sebelum diperbaiki..."></textarea></div>
+        <div class="field"><label>Pekerjaan yang dilakukan</label><textarea id="ba-pekerjaan" placeholder="Uraian lengkap pekerjaan perbaikan..."></textarea></div>
+        <div class="form-grid-2">
+          <div class="field"><label>Material / bahan yang digunakan</label><input type="text" id="ba-material" placeholder="Daftar material"></div>
+          <div class="field"><label>Estimasi biaya (Rp)</label><input type="number" id="ba-biaya" placeholder="0"></div>
+        </div>
+        <div class="field"><label>Hasil perbaikan</label>
+          <select id="ba-hasil">
+            <option>Selesai sempurna</option>
+            <option>Selesai sebagian</option>
+            <option>Perlu tindak lanjut</option>
+          </select>
+        </div>
+        <div class="field"><label>Catatan tambahan</label><textarea id="ba-catatan" placeholder="Opsional..."></textarea></div>
+      </div>
+      <div class="card">
+        <div class="card-title">Generate berita acara resmi</div>
+        <button class="btn-secondary" onclick="runAI('berita-acara')">Buat naskah berita acara formal →</button>
+        <div class="ai-box placeholder" id="ai-berita-acara">Isi semua field lalu klik tombol untuk menghasilkan naskah berita acara siap cetak.</div>
+      </div>
+    </div>
+
+    <!-- ===== PANDUAN ===== -->
+    <div class="page" id="page-panduan">
+      <div class="page-header">
+        <div class="page-title">Panduan Setup Google Form + Spreadsheet</div>
+        <div class="page-desc">Langkah-langkah mengintegrasikan MANTAP ke ekosistem Google</div>
+      </div>
+      <div class="alert alert-success">
+        ✅ Setelah setup selesai, semua data dari Google Form akan otomatis masuk ke Google Spreadsheet secara real-time.
+      </div>
+      <div class="card">
+        <div class="card-title">Langkah setup</div>
+        <div class="step">
+          <div class="step-num">1</div>
+          <div>
+            <div class="step-title">Buat Google Spreadsheet sebagai database pusat</div>
+            <div class="step-desc">Buka <a href="https://sheets.google.com" target="_blank">sheets.google.com</a> → buat spreadsheet baru → beri nama <b>MANTAP Kanwil Ditjenpas Aceh 2026</b>.<br>Buat 5 tab: <code>Dashboard</code>, <code>Cek Harian</code>, <code>Laporan Gangguan</code>, <code>Inventaris</code>, <code>Berita Acara</code>.</div>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">2</div>
+          <div>
+            <div class="step-title">Buat 4 Google Form sesuai komponen MANTAP</div>
+            <div class="step-desc">Buka <a href="https://forms.google.com" target="_blank">forms.google.com</a> → buat 4 form: Form Cek Harian, Kartu Lapor Gangguan, Buku Inventaris, dan Berita Acara.<br>Aktifkan <code>Collect email addresses</code> di Settings agar pelapor teridentifikasi.</div>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">3</div>
+          <div>
+            <div class="step-title">Hubungkan setiap Form ke tab Spreadsheet</div>
+            <div class="step-desc">Di setiap Google Form → tab <b>Responses</b> → klik ikon spreadsheet hijau → pilih <b>Select existing spreadsheet</b> → pilih file MANTAP → pilih tab yang sesuai. Semua respons otomatis masuk.</div>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">4</div>
+          <div>
+            <div class="step-title">Aktifkan notifikasi email otomatis</div>
+            <div class="step-desc">Di Spreadsheet → menu <b>Tools</b> → <b>Notification rules</b> → pilih <code>Any changes are made</code> → masukkan email pengelola fasilitas → simpan. Pengelola akan ternotifikasi setiap ada laporan masuk.</div>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">5</div>
+          <div>
+            <div class="step-title">Buat dashboard otomatis dengan formula</div>
+            <div class="step-desc">Di tab <code>Dashboard</code>, gunakan formula berikut untuk ringkasan otomatis:</div>
+            <div class="copy-box" id="formula-box">
+=COUNTIF('Cek Harian'!D:D,"Baik")          ← Hitung kondisi Baik
+=COUNTIF('Laporan Gangguan'!F:F,"Tinggi")  ← Laporan urgensi tinggi
+=COUNTA('Inventaris'!B:B)-1               ← Total aset tercatat
+=COUNTIF('Berita Acara'!J:J,"Selesai sempurna")  ← Perbaikan selesai
+<button class="copy-btn" onclick="copyText('formula-box')">Salin</button></div>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">6</div>
+          <div>
+            <div class="step-title">Pasang Apps Script untuk notifikasi WhatsApp (opsional)</div>
+            <div class="step-desc">Di Spreadsheet → menu <b>Extensions</b> → <b>Apps Script</b> → tempel script berikut:</div>
+            <div class="copy-box" id="script-box">
+function onFormSubmit(e) {
+  var sheet = e.source.getActiveSheet();
+  var row = e.values;
+  var subject = "🔔 Laporan Gangguan Baru - MANTAP";
+  var body = "Fasilitas: " + row[3] + "\n"
+           + "Masalah: " + row[4] + "\n"
+           + "Urgensi: " + row[5] + "\n"
+           + "Pelapor: " + row[1] + "\n"
+           + "Tanggal: " + row[0];
+  MailApp.sendEmail("email_pengelola@gmail.com", subject, body);
+}
+<button class="copy-btn" onclick="copyText('script-box')">Salin</button></div>
+          </div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title">Link penting</div>
+        <div style="display:flex; flex-direction:column; gap:8px;">
+          <a href="https://forms.google.com" target="_blank" style="color:var(--green); font-size:13px;">→ Google Forms (buat form baru)</a>
+          <a href="https://sheets.google.com" target="_blank" style="color:var(--green); font-size:13px;">→ Google Sheets (buat spreadsheet)</a>
+          <a href="https://drive.google.com" target="_blank" style="color:var(--green); font-size:13px;">→ Google Drive (kelola semua file)</a>
+        </div>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<div class="footer">
+  MANTAP — Manajemen Terpadu Aset dan Prasarana &nbsp;|&nbsp; Kanwil Ditjenpas Aceh &nbsp;|&nbsp; Program Magang Nasional Kemnaker 2026 &nbsp;|&nbsp; Peserta: Muammar
+</div>
+
+<script>
+// Set today's date
+const today = new Date().toISOString().split('T')[0];
+document.querySelectorAll('input[type=date]').forEach(el => { if(!el.value) el.value = today; });
+
+// Navigation
+function showPage(id, el) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item, .mobile-nav button').forEach(b => b.classList.remove('active'));
+  document.getElementById('page-' + id).classList.add('active');
+  if(el) {
+    el.classList.add('active');
+    // also sync mobile nav
+    const mobileNav = document.getElementById('mobile-nav');
+    if(mobileNav) {
+      mobileNav.querySelectorAll('button').forEach((b,i) => {
+        const pages = ['dashboard','cek-harian','lapor-gangguan','inventaris','berita-acara','panduan'];
+        if(pages[i] === id) b.classList.add('active'); else b.classList.remove('active');
+      });
+    }
+  }
+  window.scrollTo(0, 0);
+}
+
+// Cek Harian rows
+let chCount = 0;
+function addFasilitasRow() {
+  chCount++;
+  const c = document.getElementById('fasilitas-container');
+  const div = document.createElement('div');
+  div.className = 'ch-row';
+  div.style.cssText = 'border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 0.875rem; margin-bottom: 0.75rem;';
+  div.innerHTML = `<div style="font-size:12px; font-weight:600; color:var(--green); margin-bottom:0.75rem; text-transform:uppercase; letter-spacing:0.05em;">Fasilitas ${chCount}</div>
+  <div class="form-grid-2"><div class="field"><label>Nama fasilitas</label><input type="text" class="ch-nama" placeholder="Contoh: AC Ruang Kerja Lt.2"></div>
+  <div class="field"><label>Kondisi</label><select class="ch-kondisi"><option>Baik</option><option>Rusak Ringan</option><option>Rusak Berat</option></select></div></div>
+  <div class="form-grid-2"><div class="field"><label>Tindakan yang diambil</label><input type="text" class="ch-tindakan" placeholder="Deskripsi tindakan"></div>
+  <div class="field"><label>Status</label><select class="ch-status"><option>Selesai</option><option>Proses</option><option>Belum Ditangani</option></select></div></div>
+  <div class="field"><label>Keterangan</label><input type="text" class="ch-ket" placeholder="Opsional — nomor seri, catatan khusus, dll."></div>`;
+  c.appendChild(div);
+}
+function hapusFasilitasRow() {
+  const rows = document.querySelectorAll('.ch-row');
+  if(rows.length > 0) { rows[rows.length-1].remove(); chCount--; }
+}
+// Initialize with 3 rows
+addFasilitasRow(); addFasilitasRow(); addFasilitasRow();
+
+// Inventaris rows
+let invCount = 0;
+function addInvRow() {
+  invCount++;
+  const t = document.getElementById('inv-table');
+  const tr = document.createElement('tr');
+  tr.className = 'inv-row';
+  tr.innerHTML = `<td style="text-align:center; color:var(--text-muted); font-size:13px;">${invCount}</td>
+  <td><input class="inv-input" type="text" placeholder="Nama barang"></td>
+  <td><input class="inv-input" type="text" placeholder="KD-001"></td>
+  <td><input class="inv-input" type="number" placeholder="1" style="width:40px;"></td>
+  <td><input class="inv-input" type="text" placeholder="Unit"></td>
+  <td><select class="inv-select"><option>Baik</option><option>Rusak Ringan</option><option>Rusak Berat</option></select></td>
+  <td><input class="inv-input" type="text" placeholder="Lokasi/ruangan"></td>
+  <td><input class="inv-input" type="text" placeholder="Keterangan"></td>`;
+  t.appendChild(tr);
+}
+function hapusInvRow() {
+  const rows = document.querySelectorAll('.inv-row');
+  if(rows.length > 0) { rows[rows.length-1].remove(); invCount--; }
+}
+// Initialize 5 rows
+for(let i=0;i<5;i++) addInvRow();
+
+function exportInv() {
+  const rows = document.querySelectorAll('.inv-row');
+  let csv = 'No,Nama Barang,Kode,Jumlah,Satuan,Kondisi,Lokasi,Keterangan\n';
+  rows.forEach((r, i) => {
+    const cells = r.querySelectorAll('input, select');
+    csv += (i+1) + ',' + Array.from(cells).map(c => '"' + (c.value||'') + '"').join(',') + '\n';
+  });
+  const a = document.createElement('a');
+  a.href = 'data:text/csv;charset=utf-8,' + encodeURIComponent(csv);
+  a.download = 'inventaris-mantap-' + today + '.csv';
+  a.click();
+}
+
+// AI
+async function runAI(type) {
+  const outEl = document.getElementById('ai-' + type);
+  let prompt = '';
+  if(type === 'cek-harian') {
+    const rows = document.querySelectorAll('.ch-row');
+    let summary = [];
+    rows.forEach(r => {
+      const nama = r.querySelector('.ch-nama')?.value || '(belum diisi)';
+      const kondisi = r.querySelector('.ch-kondisi')?.value || '-';
+      const status = r.querySelector('.ch-status')?.value || '-';
+      summary.push(`${nama}: ${kondisi} (${status})`);
+    });
+    const pengelola = document.getElementById('ch-nama')?.value || 'Pengelola';
+    prompt = `Sebagai asisten pengelola fasilitas pemerintah, berikan rekomendasi tindak lanjut singkat dan prioritas penanganan berdasarkan hasil cek harian berikut oleh ${pengelola}:\n${summary.join('\n')}\nJawab dalam Bahasa Indonesia, 4-5 kalimat, fokus pada urutan prioritas dan langkah konkret.`;
+  } else if(type === 'lapor-gangguan') {
+    const fasilitas = document.getElementById('lg-fasilitas')?.value || 'tidak disebutkan';
+    const deskripsi = document.getElementById('lg-deskripsi')?.value || 'tidak ada deskripsi';
+    const urgensi = document.getElementById('lg-urgensi')?.value || 'Sedang';
+    const unit = document.getElementById('lg-unit')?.value || '-';
+    prompt = `Berikan rekomendasi penanganan gangguan fasilitas untuk instansi pemerintah:\nFasilitas: ${fasilitas}\nLokasi: ${unit}\nMasalah: ${deskripsi}\nUrgensi: ${urgensi}\nJawab dalam Bahasa Indonesia, 4-5 kalimat, berikan langkah konkret dan estimasi waktu penanganan.`;
+  } else if(type === 'berita-acara') {
+    const nomor = document.getElementById('ba-nomor')?.value || 'BA-001';
+    const vendor = document.getElementById('ba-vendor')?.value || '-';
+    const fasilitas = document.getElementById('ba-fasilitas')?.value || '-';
+    const lokasi = document.getElementById('ba-lokasi')?.value || '-';
+    const kerusakan = document.getElementById('ba-kerusakan')?.value || '-';
+    const pekerjaan = document.getElementById('ba-pekerjaan')?.value || '-';
+    const hasil = document.getElementById('ba-hasil')?.value || 'Selesai sempurna';
+    const biaya = document.getElementById('ba-biaya')?.value || '0';
+    const tanggal = document.getElementById('ba-tanggal')?.value || today;
+    prompt = `Buat naskah Berita Acara Pengawasan Perbaikan Fasilitas yang formal dan siap ditandatangani dalam Bahasa Indonesia berdasarkan data:\nNomor: ${nomor}\nTanggal: ${tanggal}\nVendor/Pihak Ketiga: ${vendor}\nFasilitas: ${fasilitas}\nLokasi: ${lokasi}\nKerusakan awal: ${kerusakan}\nPekerjaan dilakukan: ${pekerjaan}\nHasil: ${hasil}\nBiaya: Rp ${biaya}\nFormat resmi instansi pemerintah Indonesia, lengkap dengan klausa penutup dan tempat tanda tangan.`;
+  }
+  outEl.className = 'ai-box ai-loading';
+  outEl.textContent = 'Sedang menganalisis...';
+  try {
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 1000,
+        messages: [{ role: 'user', content: prompt }]
+      })
+    });
+    const data = await res.json();
+    outEl.className = 'ai-box';
+    outEl.textContent = data.content?.[0]?.text || 'Tidak ada respons.';
+  } catch(e) {
+    outEl.className = 'ai-box';
+    outEl.textContent = 'Gagal menghubungi AI. Periksa koneksi internet.';
+  }
+}
+
+function copyText(id) {
+  const el = document.getElementById(id);
+  const text = el.innerText.replace('Salin','').trim();
+  navigator.clipboard.writeText(text).then(() => {
+    const btn = el.querySelector('.copy-btn');
+    if(btn) { btn.textContent = '✓ Tersalin'; setTimeout(() => btn.textContent = 'Salin', 2000); }
+  });
+}
+</script>
+</body>
+</html>
